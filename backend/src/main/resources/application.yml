@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: gershon-watches-api
+
+  # Active profile default is dev (H2 auto-fallback for zero configuration), 
+  # set to 'postgres' when connecting to live PostgreSQL server!
+  profiles:
+    active: dev
+
+---
+# Development Profile (H2 embedded DB, supports null prices & JPA)
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:h2:mem:watchesdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password: 
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+---
+# PostgreSQL Production/Integration Profile
+spring:
+  config:
+    activate:
+      on-profile: postgres
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:watchesdb}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASS:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+# Stripe Configuration
+stripe:
+  secret:
+    key: ${STRIPE_SECRET_KEY:sk_test_mock_gershon_key}
+
+server:
+  port: 8080
