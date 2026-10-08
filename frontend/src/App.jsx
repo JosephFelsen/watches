@@ -121,11 +121,11 @@ export const App = () => {
         cartCount={cartItems.length}
       />
 
-      {/* Hero Section with Translucent Background Overlay */}
+      {/* Hero Section with Light Translucent Background Overlay */}
       <section 
         className="hero-section"
         style={{
-          backgroundImage: `linear-gradient(180deg, rgba(8, 9, 12, 0.72) 0%, rgba(8, 9, 12, 0.88) 70%, #08090c 100%), url("images/header-bg.jpg")`
+          backgroundImage: `linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(248, 249, 250, 0.94) 75%, #f8f9fa 100%), url("images/header-bg.jpg")`
         }}
       >
         <div className="hero-subtitle">{t('tagline')}</div>
