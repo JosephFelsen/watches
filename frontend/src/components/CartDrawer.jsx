@@ -41,7 +41,7 @@ export const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveFromCart, onPro
           ) : (
             cartItems.map((item) => (
               <div key={item.id} className="cart-item">
-                <img src={item.imageUrl || '/images/watch1.png'} alt={item.name} className="cart-item-img" />
+                <img src={item.imageUrl || 'images/watch1.png'} alt={item.name} className="cart-item-img" />
                 <div className="cart-item-info">
                   <div className="cart-item-title">{item.name}</div>
                   <div className="cart-item-price">{formatPrice(item.price)}</div>

@@ -7,7 +7,7 @@ export const initialWatches = [
     name: "Gershon Royal Chronograph Rose Gold",
     brand: "Gershon Genève",
     price: 34500.00,
-    imageUrl: "/images/watch1.png",
+    imageUrl: "images/watch1.png",
     description: "Handcrafted 18k rose gold chronograph featuring obsidian guilloché dial, self-winding mechanical movement with 72-hour power reserve, and hand-stitched alligator strap."
   },
   {
@@ -15,7 +15,7 @@ export const initialWatches = [
     name: "Grand Tourbillon Skeleton Edition",
     brand: "Gershon Atelier",
     price: 89000.00,
-    imageUrl: "/images/watch2.png",
+    imageUrl: "images/watch2.png",
     description: "High complication skeletonized tourbillon encased in polished 950 platinum with anti-reflective sapphire glass crystal."
   },
   {
@@ -23,7 +23,7 @@ export const initialWatches = [
     name: "Nautilus Vintage Golden Sunburst",
     brand: "Gershon Heritage",
     price: null, // Null price -> "Price on Request" / Concierge acquisition!
-    imageUrl: "/images/watch3.png",
+    imageUrl: "images/watch3.png",
     description: "Ultra-rare vintage golden dress timepiece featuring deep cobalt blue sunburst dial and yellow gold integrated bezel. Private acquisition only."
   }
 ];

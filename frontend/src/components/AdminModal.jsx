@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Upload, Image as ImageIcon } from 'lucide-react';
+import { X, Sparkles, Upload } from 'lucide-react';
 import { useI18n } from '../i18n/i18nContext';
 
 export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
@@ -9,11 +9,11 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
     name: '',
     brand: 'Gershon Genève',
     price: '',
-    imageUrl: '/images/watch1.png',
+    imageUrl: 'images/watch1.png',
     description: ''
   });
 
-  const [imagePreview, setImagePreview] = useState('/images/watch1.png');
+  const [imagePreview, setImagePreview] = useState('images/watch1.png');
 
   if (!isOpen) return null;
 
@@ -38,7 +38,7 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
       name: formData.name || 'Untitled Timepiece',
       brand: formData.brand || 'Gershon Atelier',
       price: formData.price !== '' && !isNaN(formData.price) ? parseFloat(formData.price) : null,
-      imageUrl: formData.imageUrl || '/images/watch1.png',
+      imageUrl: formData.imageUrl || 'images/watch1.png',
       description: formData.description
     };
 
@@ -47,10 +47,10 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
       name: '',
       brand: 'Gershon Genève',
       price: '',
-      imageUrl: '/images/watch1.png',
+      imageUrl: 'images/watch1.png',
       description: ''
     });
-    setImagePreview('/images/watch1.png');
+    setImagePreview('images/watch1.png');
     onClose();
   };
 
@@ -175,7 +175,7 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
             <div style={{ marginTop: '0.75rem' }}>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>Or pick a sample timepiece image:</div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                {['/images/watch1.png', '/images/watch2.png', '/images/watch3.png'].map((img, idx) => (
+                {['images/watch1.png', 'images/watch2.png', 'images/watch3.png'].map((img, idx) => (
                   <button
                     type="button"
                     key={idx}

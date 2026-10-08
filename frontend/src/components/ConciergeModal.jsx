@@ -50,7 +50,7 @@ export const ConciergeModal = ({ watch, isOpen, onClose }) => {
               alignItems: 'center',
               gap: '1rem'
             }}>
-              <img src={watch.imageUrl || '/images/watch1.png'} alt={watch.name} style={{ width: 50, height: 50, objectFit: 'contain' }} />
+              <img src={watch.imageUrl || 'images/watch1.png'} alt={watch.name} style={{ width: 50, height: 50, objectFit: 'contain' }} />
               <div>
                 <strong style={{ color: '#fff', display: 'block' }}>{watch.name}</strong>
                 <span style={{ color: 'var(--accent-rose)', fontSize: '0.85rem' }}>{t('priceOnRequest')}</span>

@@ -22,11 +22,11 @@ export const WatchCard = ({ watch, isAdminLoggedIn, onAddToCart, onDeleteWatch, 
           <span className="badge-por">{t('priceOnRequest')}</span>
         )}
         <img 
-          src={watch.imageUrl || '/images/watch1.png'} 
+          src={watch.imageUrl || 'images/watch1.png'} 
           alt={watch.name} 
           className="watch-image"
           onError={(e) => {
-            e.target.src = '/images/watch1.png';
+            e.target.src = 'images/watch1.png';
           }}
         />
       </div>
