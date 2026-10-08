@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles } from 'lucide-react';
+import { X, Sparkles, Upload, Image as ImageIcon } from 'lucide-react';
 import { useI18n } from '../i18n/i18nContext';
 
 export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
@@ -8,12 +8,28 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
   const [formData, setFormData] = useState({
     name: '',
     brand: 'Gershon Genève',
-    price: '', // can be left empty for null!
+    price: '',
     imageUrl: '/images/watch1.png',
     description: ''
   });
 
+  const [imagePreview, setImagePreview] = useState('/images/watch1.png');
+
   if (!isOpen) return null;
+
+  // Handle direct local image file upload (converts to base64 Data URL)
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64Image = reader.result;
+        setImagePreview(base64Image);
+        setFormData((prev) => ({ ...prev, imageUrl: base64Image }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -34,6 +50,7 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
       imageUrl: '/images/watch1.png',
       description: ''
     });
+    setImagePreview('/images/watch1.png');
     onClose();
   };
 
@@ -90,30 +107,90 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
             <div className="form-help">{t('formPriceHelp')}</div>
           </div>
 
+          {/* File Upload Box */}
           <div className="form-group">
-            <label className="form-label">{t('formImage')}</label>
-            <input 
-              type="text" 
-              className="form-input" 
-              placeholder="/images/watch1.png or image URL" 
-              value={formData.imageUrl} 
-              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-              id="input-watch-image"
-            />
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-              {['/images/watch1.png', '/images/watch2.png', '/images/watch3.png'].map((img, idx) => (
-                <button
-                  type="button"
-                  key={idx}
-                  className="btn-secondary"
-                  style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}
-                  onClick={() => setFormData({ ...formData, imageUrl: img })}
-                >
-                  Sample {idx + 1}
-                </button>
-              ))}
+            <label className="form-label">{t('formUploadImage') || 'Upload Watch Image'}</label>
+            
+            <div style={{
+              border: '2px dashed var(--border-gold)',
+              borderRadius: 'var(--radius-md)',
+              padding: '1.25rem',
+              textAlign: 'center',
+              background: 'rgba(255, 255, 255, 0.02)',
+              cursor: 'pointer',
+              marginBottom: '0.75rem',
+              position: 'relative'
+            }}>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={handleFileChange}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  opacity: 0,
+                  cursor: 'pointer',
+                  width: '100%',
+                  height: '100%'
+                }}
+                id="file-upload-input"
+              />
+              <Upload size={32} color="var(--accent-gold)" style={{ marginBottom: '0.5rem' }} />
+              <div style={{ color: '#fff', fontWeight: 600, fontSize: '0.95rem' }}>
+                {t('clickToUpload') || 'Click or drag image file here to upload'}
+              </div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                PNG, JPG, WEBP or GIF supported
+              </div>
             </div>
-            <div className="form-help">{t('formImageHelp')}</div>
+
+            {/* Image Preview Box */}
+            {imagePreview && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                background: 'rgba(0,0,0,0.4)',
+                padding: '0.75rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border-gold)'
+              }}>
+                <img 
+                  src={imagePreview} 
+                  alt="Preview" 
+                  style={{ width: '60px', height: '60px', objectFit: 'contain', background: '#000', borderRadius: '6px' }} 
+                />
+                <div>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--accent-gold-light)', fontWeight: 600, display: 'block' }}>
+                    Image Selected
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Ready for publication
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Sample Image Presets */}
+            <div style={{ marginTop: '0.75rem' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>Or pick a sample timepiece image:</div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                {['/images/watch1.png', '/images/watch2.png', '/images/watch3.png'].map((img, idx) => (
+                  <button
+                    type="button"
+                    key={idx}
+                    className="btn-secondary"
+                    style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}
+                    onClick={() => {
+                      setImagePreview(img);
+                      setFormData({ ...formData, imageUrl: img });
+                    }}
+                  >
+                    Sample {idx + 1}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="form-group">
