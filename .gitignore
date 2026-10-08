@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Production Builds
+dist/
+frontend/dist/
+target/
+backend/target/
+
+# System & IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Database files
+*.db
+*.mv.db
+
+# Logs
+*.log
