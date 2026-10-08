@@ -1,7 +1,8 @@
 const API_BASE_URL = '/api';
+const CLOUD_SYNC_URL = 'https://gershon-watches-default-rtdb.firebaseio.com/watches.json';
 const LOCAL_STORAGE_KEY = 'gershon_watches_catalog';
 
-// Initial sample data if server is offline or database empty
+// Initial default luxury timepieces
 export const initialWatches = [
   {
     id: 1,
@@ -42,8 +43,6 @@ export const getStoredWatches = () => {
   } catch (e) {
     console.warn('Failed to read from localStorage:', e);
   }
-  // Initialize with initial watches if empty
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(initialWatches));
   return initialWatches;
 };
 
@@ -56,59 +55,107 @@ export const setStoredWatches = (watches) => {
   }
 };
 
+// Global Fetch: Syncs from Cloud Database across ALL visitors worldwide
 export const fetchWatches = async () => {
   try {
+    // 1. Try local Spring Boot REST API
     const response = await fetch(`${API_BASE_URL}/watches`);
-    if (!response.ok) throw new Error('API server returned error');
-    const data = await response.json();
-    if (data && data.length > 0) {
-      setStoredWatches(data);
-      return data;
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data.length > 0) {
+        setStoredWatches(data);
+        return data;
+      }
     }
-    return getStoredWatches();
-  } catch (error) {
-    console.warn('Backend connection pending, using persisted catalog:', error);
-    return getStoredWatches();
+  } catch (e) {
+    // Backend API offline, fallback to cloud database
   }
+
+  try {
+    // 2. Cloud Database Sync (Worldwide live synchronization across all devices!)
+    const cloudRes = await fetch(CLOUD_SYNC_URL);
+    if (cloudRes.ok) {
+      const cloudData = await cloudRes.json();
+      if (cloudData) {
+        // Firebase objects can be key-value maps or arrays
+        const list = Array.isArray(cloudData) 
+          ? cloudData.filter(Boolean) 
+          : Object.values(cloudData).filter(Boolean);
+        if (list.length > 0) {
+          setStoredWatches(list);
+          return list;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Cloud sync offline, reading local cache:', e);
+  }
+
+  return getStoredWatches();
 };
 
+// Global Post: Publishes watch to Cloud Database so ALL visitors see it immediately
 export const postWatch = async (watchData) => {
+  const newWatch = {
+    id: Date.now(),
+    ...watchData
+  };
+
+  const current = getStoredWatches();
+  const updated = [newWatch, ...current];
+  setStoredWatches(updated);
+
+  // Sync to Cloud Database worldwide
   try {
-    const response = await fetch(`${API_BASE_URL}/watches`, {
+    await fetch(CLOUD_SYNC_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated)
+    });
+  } catch (e) {
+    console.warn('Cloud sync update failed:', e);
+  }
+
+  // Also notify local Spring Boot API if running
+  try {
+    await fetch(`${API_BASE_URL}/watches`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(watchData)
     });
-    if (!response.ok) throw new Error('Failed to post watch');
-    const created = await response.json();
-    const current = getStoredWatches();
-    const updated = [created, ...current];
-    setStoredWatches(updated);
-    return created;
-  } catch (error) {
-    console.warn('Backend post failed, creating persistent local item:', error);
-    const newWatch = {
-      id: Date.now(),
-      ...watchData
-    };
-    const current = getStoredWatches();
-    const updated = [newWatch, ...current];
-    setStoredWatches(updated);
-    return newWatch;
+  } catch (e) {
+    // Ignore local API error
   }
+
+  return newWatch;
 };
 
+// Global Delete: Removes watch from Cloud Database worldwide
 export const deleteWatch = async (id) => {
+  const current = getStoredWatches();
+  const updated = current.filter((w) => w.id !== id);
+  setStoredWatches(updated);
+
+  // Sync deletion to Cloud Database worldwide
+  try {
+    await fetch(CLOUD_SYNC_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated)
+    });
+  } catch (e) {
+    console.warn('Cloud sync deletion failed:', e);
+  }
+
+  // Also notify local Spring Boot API if running
   try {
     await fetch(`${API_BASE_URL}/watches/${id}`, {
       method: 'DELETE'
     });
-  } catch (error) {
-    console.warn('Backend delete failed, performing persistent local deletion:', error);
+  } catch (e) {
+    // Ignore local API error
   }
-  const current = getStoredWatches();
-  const updated = current.filter((w) => w.id !== id);
-  setStoredWatches(updated);
+
   return true;
 };
 

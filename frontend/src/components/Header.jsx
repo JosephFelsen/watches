@@ -1,5 +1,5 @@
 import React from 'react';
-import { Watch, ShoppingBag, PlusCircle, ShieldCheck, LogOut, Lock } from 'lucide-react';
+import { ShoppingBag, PlusCircle, ShieldCheck, LogOut, Lock } from 'lucide-react';
 import { useI18n } from '../i18n/i18nContext';
 import { LanguageSelector } from './LanguageSelector';
 
@@ -10,9 +10,7 @@ export const Header = ({ onOpenAdmin, onOpenAdminLogin, isAdminLoggedIn, onLogou
     <header className="site-header">
       <div className="header-container">
         <div className="brand-logo">
-          <div className="logo-icon">
-            <Watch size={24} />
-          </div>
+          <img src="images/logo.png" alt="Gershon Watches Logo" className="custom-logo-img" />
           <div>
             <div className="brand-name">{t('brand')}</div>
           </div>

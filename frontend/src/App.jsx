@@ -28,12 +28,26 @@ export const App = () => {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [selectedConciergeWatch, setSelectedConciergeWatch] = useState(null);
 
+  // Initial fetch + Automatic Live Realtime Sync (polls cloud DB every 6 seconds)
   useEffect(() => {
+    let isMounted = true;
+
     const loadWatches = async () => {
       const data = await fetchWatches();
-      setWatches(data);
+      if (isMounted && data) {
+        setWatches(data);
+      }
     };
+
     loadWatches();
+
+    // Auto-sync interval so all visitors get real-time updates when admin adds/deletes items!
+    const intervalId = setInterval(loadWatches, 6000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
   }, []);
 
   // Post Watch Handler (requires admin authorization)
@@ -107,7 +121,7 @@ export const App = () => {
         cartCount={cartItems.length}
       />
 
-      {/* Hero Section */}
+      {/* Hero Section with Classy See-through Background */}
       <section className="hero-section">
         <div className="hero-subtitle">{t('tagline')}</div>
         <h1 className="hero-title">{t('heroTitle')}</h1>
