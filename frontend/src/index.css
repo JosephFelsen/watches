@@ -72,12 +72,12 @@ a {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-gold);
-  padding: 0.85rem 2rem;
-  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.04);
+  padding: 0.65rem 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .header-container {
@@ -91,24 +91,30 @@ a {
 .brand-logo {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 1.1rem;
 }
 
 .custom-logo-img {
-  height: 42px;
-  max-width: 160px;
+  height: 68px;
+  max-width: 240px;
   object-fit: contain;
-  filter: drop-shadow(0 2px 6px rgba(197, 160, 89, 0.3));
+  filter: drop-shadow(0 3px 10px rgba(197, 160, 89, 0.35)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.15));
+  transition: transform 0.3s ease;
+}
+
+.custom-logo-img:hover {
+  transform: scale(1.05);
 }
 
 .brand-name {
   font-family: var(--font-serif);
-  font-size: 1.5rem;
+  font-size: 1.65rem;
   font-weight: 700;
-  background: linear-gradient(90deg, #111827, #4b5563, var(--accent-gold));
+  background: linear-gradient(90deg, #111827, #374151, var(--accent-gold));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-transform: lowercase;
+  letter-spacing: 0.04em;
 }
 
 .nav-actions {
