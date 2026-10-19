@@ -28,7 +28,7 @@ export const App = () => {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [selectedConciergeWatch, setSelectedConciergeWatch] = useState(null);
 
-  // Initial fetch + Automatic Live Realtime Sync (polls cloud DB every 6 seconds)
+  // Initial fetch + Cross-tab Live Synchronization
   useEffect(() => {
     let isMounted = true;
 
@@ -41,12 +41,25 @@ export const App = () => {
 
     loadWatches();
 
-    // Auto-sync interval so all visitors get real-time updates when admin adds/deletes items!
-    const intervalId = setInterval(loadWatches, 6000);
+    // Native storage event: automatically updates any open tab/window in real-time
+    const handleStorageChange = (e) => {
+      if (e.key === 'gershon_watches_catalog' && isMounted && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            setWatches(parsed);
+          }
+        } catch (err) {
+          console.warn('Storage sync parse error:', err);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
 
     return () => {
       isMounted = false;
-      clearInterval(intervalId);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
@@ -57,7 +70,7 @@ export const App = () => {
       return;
     }
     const created = await apiPostWatch(newWatchData);
-    setWatches((prev) => [created, ...prev]);
+    setWatches((prev) => [created, ...prev.filter((w) => w.id !== created.id)]);
   };
 
   // Delete Watch Handler (requires admin authorization)
