@@ -1,48 +1,23 @@
 const API_BASE_URL = '/api';
 const LOCAL_STORAGE_KEY = 'gershon_watches_catalog';
 
-// Initial default luxury timepieces
-export const initialWatches = [
-  {
-    id: 1,
-    name: "Gershon Royal Chronograph Rose Gold",
-    brand: "Gershon Genève",
-    price: 34500.00,
-    imageUrl: "images/watch1.png",
-    description: "Handcrafted 18k rose gold chronograph featuring obsidian guilloché dial, self-winding mechanical movement with 72-hour power reserve, and hand-stitched alligator strap."
-  },
-  {
-    id: 2,
-    name: "Grand Tourbillon Skeleton Edition",
-    brand: "Gershon Atelier",
-    price: 89000.00,
-    imageUrl: "images/watch2.png",
-    description: "High complication skeletonized tourbillon encased in polished 950 platinum with anti-reflective sapphire glass crystal."
-  },
-  {
-    id: 3,
-    name: "Nautilus Vintage Golden Sunburst",
-    brand: "Gershon Heritage",
-    price: null, // Null price -> "Price on Request" / Concierge acquisition!
-    imageUrl: "images/watch3.png",
-    description: "Ultra-rare vintage golden dress timepiece featuring deep cobalt blue sunburst dial and yellow gold integrated bezel. Private acquisition only."
-  }
-];
+// Initial default luxury timepieces (empty collection ready for admin uploads)
+export const initialWatches = [];
 
 // Helper to read persisted watches from localStorage
 export const getStoredWatches = () => {
   try {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (saved) {
+    if (saved !== null) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
     }
   } catch (e) {
     console.warn('Failed to read from localStorage:', e);
   }
-  return initialWatches;
+  return [];
 };
 
 // Helper to save watches list to localStorage

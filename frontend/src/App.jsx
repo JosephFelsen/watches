@@ -193,18 +193,54 @@ export const App = () => {
 
       {/* Watch Catalog Showcase */}
       <main className="catalog-container">
-        <div className="watch-grid">
-          {filteredWatches.map((watch) => (
-            <WatchCard 
-              key={watch.id}
-              watch={watch}
-              isAdminLoggedIn={isAdminLoggedIn}
-              onAddToCart={handleAddToCart}
-              onDeleteWatch={handleDeleteWatch}
-              onOpenConcierge={(w) => setSelectedConciergeWatch(w)}
-            />
-          ))}
-        </div>
+        {filteredWatches.length > 0 ? (
+          <div className="watch-grid">
+            {filteredWatches.map((watch) => (
+              <WatchCard 
+                key={watch.id}
+                watch={watch}
+                isAdminLoggedIn={isAdminLoggedIn}
+                onAddToCart={handleAddToCart}
+                onDeleteWatch={handleDeleteWatch}
+                onOpenConcierge={(w) => setSelectedConciergeWatch(w)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div style={{
+            textAlign: 'center',
+            padding: '4rem 2rem',
+            background: '#ffffff',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-gold)',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
+            maxWidth: '650px',
+            margin: '0 auto'
+          }}>
+            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', marginBottom: '0.75rem', color: '#111827' }}>
+              Exclusive Collection Awaiting Exhibition
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '1.5rem', lineHeight: '1.6' }}>
+              The showcase is currently being curated. Authenticate as Owner Admin to post new luxury timepieces to the catalog.
+            </p>
+            {!isAdminLoggedIn && (
+              <button 
+                className="btn-primary" 
+                onClick={() => setIsAdminLoginOpen(true)}
+              >
+                Authenticate as Owner Admin
+              </button>
+            )}
+            {isAdminLoggedIn && (
+              <button 
+                className="btn-primary" 
+                onClick={() => setIsAdminOpen(true)}
+              >
+                + Post First Timepiece
+              </button>
+            )}
+          </div>
+        )}
       </main>
 
       {/* Guarantee & Authenticity Banner */}
