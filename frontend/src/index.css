@@ -410,9 +410,9 @@ a {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: rgba(217, 119, 6, 0.1);
-  border: 1px solid var(--accent-rose);
-  color: var(--accent-rose);
+  background: rgba(26, 92, 58, 0.1);
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
   padding: 0.3rem 0.75rem;
   border-radius: 12px;
   font-size: 0.75rem;
@@ -455,16 +455,27 @@ a {
 }
 
 .price-tag {
-  font-size: 1.35rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  color: var(--accent-gold);
+  color: #ffffff;
+  background: linear-gradient(135deg, #1a5c3a, #0f3d25);
+  padding: 0.35rem 0.85rem;
+  border-radius: 8px;
+  letter-spacing: 0.02em;
+  display: inline-block;
+  box-shadow: 0 2px 8px rgba(26, 92, 58, 0.25);
 }
 
 .price-null-tag {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: var(--accent-rose);
+  color: var(--accent-gold);
+  background: rgba(26, 92, 58, 0.08);
+  border: 1px dashed rgba(26, 92, 58, 0.4);
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
   font-style: italic;
+  display: inline-block;
 }
 
 /* Modals & Slide-out Panels */

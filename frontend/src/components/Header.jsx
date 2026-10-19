@@ -22,9 +22,9 @@ export const Header = ({ onOpenAdmin, onOpenAdminLogin, isAdminLoggedIn, onLogou
           {isAdminLoggedIn ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <span style={{
-                background: 'rgba(212, 175, 55, 0.15)',
+                background: 'rgba(26, 92, 58, 0.12)',
                 border: '1px solid var(--accent-gold)',
-                color: 'var(--accent-gold-light)',
+                color: 'var(--accent-gold)',
                 padding: '0.4rem 0.8rem',
                 borderRadius: '20px',
                 fontSize: '0.8rem',

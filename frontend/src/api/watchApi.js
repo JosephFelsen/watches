@@ -1,5 +1,5 @@
 const API_BASE_URL = '/api';
-const CLOUD_SYNC_URL = 'https://gershon-watches-default-rtdb.firebaseio.com/watches.json';
+const CLOUD_SYNC_URL = 'https://extendsclass.com/api/json-storage/bin/feafeaa';
 const LOCAL_STORAGE_KEY = 'gershon_watches_catalog';
 
 // Initial default luxury timepieces
@@ -55,10 +55,31 @@ export const setStoredWatches = (watches) => {
   }
 };
 
-// Global Fetch: Syncs from Cloud Database across ALL visitors worldwide
+// Global Fetch: Syncs from Cloud Database across ALL visitors worldwide & incognito
 export const fetchWatches = async () => {
   try {
-    // 1. Try local Spring Boot REST API
+    // 1. Cloud Database Sync (Worldwide live synchronization across all devices & incognito!)
+    const cloudRes = await fetch(CLOUD_SYNC_URL, {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (cloudRes.ok) {
+      const cloudData = await cloudRes.json();
+      if (cloudData) {
+        const list = Array.isArray(cloudData) 
+          ? cloudData.filter(Boolean) 
+          : (typeof cloudData === 'object' ? Object.values(cloudData).filter(Boolean) : null);
+        if (list && list.length > 0) {
+          setStoredWatches(list);
+          return list;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Cloud sync error, falling back to local storage:', e);
+  }
+
+  // 2. Try local Spring Boot REST API
+  try {
     const response = await fetch(`${API_BASE_URL}/watches`);
     if (response.ok) {
       const data = await response.json();
@@ -67,31 +88,22 @@ export const fetchWatches = async () => {
         return data;
       }
     }
-  } catch (e) {
-    // Backend API offline, fallback to cloud database
-  }
-
-  try {
-    // 2. Cloud Database Sync (Worldwide live synchronization across all devices!)
-    const cloudRes = await fetch(CLOUD_SYNC_URL);
-    if (cloudRes.ok) {
-      const cloudData = await cloudRes.json();
-      if (cloudData) {
-        // Firebase objects can be key-value maps or arrays
-        const list = Array.isArray(cloudData) 
-          ? cloudData.filter(Boolean) 
-          : Object.values(cloudData).filter(Boolean);
-        if (list.length > 0) {
-          setStoredWatches(list);
-          return list;
-        }
-      }
-    }
-  } catch (e) {
-    console.warn('Cloud sync offline, reading local cache:', e);
-  }
+  } catch (e) {}
 
   return getStoredWatches();
+};
+
+// Helper to push updated list to Cloud Database
+const syncToCloud = async (watchesList) => {
+  try {
+    await fetch(CLOUD_SYNC_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(watchesList)
+    });
+  } catch (e) {
+    console.warn('Cloud sync update failed:', e);
+  }
 };
 
 // Global Post: Publishes watch to Cloud Database so ALL visitors see it immediately
@@ -101,20 +113,25 @@ export const postWatch = async (watchData) => {
     ...watchData
   };
 
-  const current = getStoredWatches();
+  // Get current list
+  let current = [];
+  try {
+    const cloudRes = await fetch(CLOUD_SYNC_URL);
+    if (cloudRes.ok) {
+      const data = await cloudRes.json();
+      if (Array.isArray(data) && data.length > 0) current = data;
+    }
+  } catch (e) {}
+
+  if (current.length === 0) {
+    current = getStoredWatches();
+  }
+
   const updated = [newWatch, ...current];
   setStoredWatches(updated);
 
   // Sync to Cloud Database worldwide
-  try {
-    await fetch(CLOUD_SYNC_URL, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updated)
-    });
-  } catch (e) {
-    console.warn('Cloud sync update failed:', e);
-  }
+  await syncToCloud(updated);
 
   // Also notify local Spring Boot API if running
   try {
@@ -123,38 +140,38 @@ export const postWatch = async (watchData) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(watchData)
     });
-  } catch (e) {
-    // Ignore local API error
-  }
+  } catch (e) {}
 
   return newWatch;
 };
 
 // Global Delete: Removes watch from Cloud Database worldwide
 export const deleteWatch = async (id) => {
-  const current = getStoredWatches();
+  let current = [];
+  try {
+    const cloudRes = await fetch(CLOUD_SYNC_URL);
+    if (cloudRes.ok) {
+      const data = await cloudRes.json();
+      if (Array.isArray(data) && data.length > 0) current = data;
+    }
+  } catch (e) {}
+
+  if (current.length === 0) {
+    current = getStoredWatches();
+  }
+
   const updated = current.filter((w) => w.id !== id);
   setStoredWatches(updated);
 
   // Sync deletion to Cloud Database worldwide
-  try {
-    await fetch(CLOUD_SYNC_URL, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updated)
-    });
-  } catch (e) {
-    console.warn('Cloud sync deletion failed:', e);
-  }
+  await syncToCloud(updated);
 
   // Also notify local Spring Boot API if running
   try {
     await fetch(`${API_BASE_URL}/watches/${id}`, {
       method: 'DELETE'
     });
-  } catch (e) {
-    // Ignore local API error
-  }
+  } catch (e) {}
 
   return true;
 };

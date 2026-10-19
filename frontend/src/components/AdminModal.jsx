@@ -7,7 +7,7 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
 
   const [formData, setFormData] = useState({
     name: '',
-    brand: 'Gershon Genève',
+    brand: '',
     price: '',
     imageUrl: 'images/watch1.png',
     description: ''
@@ -17,15 +17,36 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
 
   if (!isOpen) return null;
 
-  // Handle direct local image file upload (converts to base64 Data URL)
+  // Handle direct local image file upload (compresses & converts to compact data URL)
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64Image = reader.result;
-        setImagePreview(base64Image);
-        setFormData((prev) => ({ ...prev, imageUrl: base64Image }));
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 800;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          setImagePreview(compressedDataUrl);
+          setFormData((prev) => ({ ...prev, imageUrl: compressedDataUrl }));
+        };
+        img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     }
@@ -70,11 +91,11 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label">{t('formTitle')}</label>
-            <input 
-              type="text" 
-              className="form-input" 
-              placeholder="e.g. Royal Perpetual Calendar" 
-              value={formData.name} 
+            <input
+              type="text"
+              className="form-input"
+              placeholder="e.g. Royal Perpetual Calendar"
+              value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
               id="input-watch-name"
@@ -83,11 +104,11 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
 
           <div className="form-group">
             <label className="form-label">{t('formBrand')}</label>
-            <input 
-              type="text" 
-              className="form-input" 
-              placeholder="e.g. Gershon Genève" 
-              value={formData.brand} 
+            <input
+              type="text"
+              className="form-input"
+              placeholder="e.g. Gershon Genève"
+              value={formData.brand}
               onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
               id="input-watch-brand"
             />
@@ -95,12 +116,12 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
 
           <div className="form-group">
             <label className="form-label">{t('formPrice')}</label>
-            <input 
-              type="number" 
+            <input
+              type="number"
               step="0.01"
-              className="form-input" 
-              placeholder="e.g. 45000 (or leave empty for null)" 
-              value={formData.price} 
+              className="form-input"
+              placeholder="e.g. 45000 (or leave empty for null)"
+              value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: e.target.value })}
               id="input-watch-price"
             />
@@ -110,7 +131,7 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
           {/* File Upload Box */}
           <div className="form-group">
             <label className="form-label">{t('formUploadImage') || 'Upload Watch Image'}</label>
-            
+
             <div style={{
               border: '2px dashed var(--border-gold)',
               borderRadius: 'var(--radius-md)',
@@ -121,9 +142,9 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
               marginBottom: '0.75rem',
               position: 'relative'
             }}>
-              <input 
-                type="file" 
-                accept="image/*" 
+              <input
+                type="file"
+                accept="image/*"
                 onChange={handleFileChange}
                 style={{
                   position: 'absolute',
@@ -155,10 +176,10 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
                 borderRadius: '8px',
                 border: '1px solid var(--border-gold)'
               }}>
-                <img 
-                  src={imagePreview} 
-                  alt="Preview" 
-                  style={{ width: '60px', height: '60px', objectFit: 'contain', background: '#000', borderRadius: '6px' }} 
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  style={{ width: '60px', height: '60px', objectFit: 'contain', background: '#000', borderRadius: '6px' }}
                 />
                 <div>
                   <span style={{ fontSize: '0.85rem', color: 'var(--accent-gold-light)', fontWeight: 600, display: 'block' }}>
@@ -195,9 +216,9 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
 
           <div className="form-group">
             <label className="form-label">{t('formDescription')}</label>
-            <textarea 
-              rows="3" 
-              className="form-textarea" 
+            <textarea
+              rows="3"
+              className="form-textarea"
               placeholder="Detail movement, casing, gold purity, or rarity..."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
