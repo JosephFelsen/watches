@@ -371,7 +371,7 @@ a {
   position: relative;
   width: 100%;
   height: 280px;
-  background: radial-gradient(circle, #f9fafb 0%, #f3f4f6 100%);
+  background: #0b0f0d;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -380,15 +380,14 @@ a {
 }
 
 .watch-image {
-  width: 85%;
-  height: 85%;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   transition: transform 0.5s ease;
-  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.15));
 }
 
 .watch-card:hover .watch-image {
-  transform: scale(1.08);
+  transform: scale(1.06);
 }
 
 .badge-brand {
