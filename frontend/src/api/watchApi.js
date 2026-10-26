@@ -28,27 +28,46 @@ export const setStoredWatches = (watches) => {
   }
 };
 
-// ── Supabase real-time subscription ──────────────────────────────────────────
-// Fires whenever ANY device adds or deletes a watch → updates UI instantly
+// ── Normalize DB row to frontend watch format ─────────────────────────────────
+const normalizeWatch = (w) => {
+  if (!w) return null;
+  return {
+    id: w.id,
+    name: w.name || '',
+    brand: w.brand || '',
+    price: w.price !== null && w.price !== undefined ? parseFloat(w.price) : null,
+    imageUrl: w.imageUrl || w.image_url || w.image || 'images/watch1.png',
+    description: w.description || '',
+    created_at: w.created_at
+  };
+};
 
+// ── Supabase real-time subscription ──────────────────────────────────────────
 const subscribeToSupabase = () => {
   supabase
     .channel('watches-realtime')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'watches' }, (payload) => {
       console.log('[Supabase] INSERT received', payload.new);
+      const newWatch = normalizeWatch(payload.new);
       const current = getStoredWatches();
-      if (!current.find((w) => String(w.id) === String(payload.new.id))) {
-        setStoredWatches([payload.new, ...current]);
+      if (!current.find((w) => String(w.id) === String(newWatch.id))) {
+        setStoredWatches([newWatch, ...current]);
       }
     })
     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'watches' }, (payload) => {
       console.log('[Supabase] DELETE received', payload.old);
-      const updated = getStoredWatches().filter((w) => String(w.id) !== String(payload.old.id));
-      setStoredWatches(updated);
+      if (payload.old && payload.old.id) {
+        const updated = getStoredWatches().filter((w) => String(w.id) !== String(payload.old.id));
+        setStoredWatches(updated);
+      } else {
+        // Refetch full table if payload.old doesn't contain the id
+        fetchWatches();
+      }
     })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'watches' }, (payload) => {
+      const updatedWatch = normalizeWatch(payload.new);
       const updated = getStoredWatches().map((w) =>
-        String(w.id) === String(payload.new.id) ? payload.new : w
+        String(w.id) === String(updatedWatch.id) ? updatedWatch : w
       );
       setStoredWatches(updated);
     })
@@ -61,56 +80,101 @@ subscribeToSupabase();
 
 // ── API functions ─────────────────────────────────────────────────────────────
 
-// Fetch all watches from Supabase (source of truth for every device)
+// Fetch all watches from Supabase
 export const fetchWatches = async () => {
   try {
     const { data, error } = await supabase
       .from('watches')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('id', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase fetch error:', error);
+      throw error;
+    }
 
-    // Always trust Supabase — overwrite local cache
-    setStoredWatches(data ?? []);
-    return data ?? [];
+    if (Array.isArray(data)) {
+      const normalized = data.map(normalizeWatch);
+      setStoredWatches(normalized);
+      return normalized;
+    }
   } catch (e) {
-    console.warn('Supabase fetch failed, using local cache:', e);
-    return getStoredWatches();
+    console.warn('Supabase fetch failed, falling back to local storage cache:', e);
   }
+  return getStoredWatches();
 };
 
-// Insert watch into Supabase → real-time will push it to all other devices
+// Insert watch into Supabase
 export const postWatch = async (watchData) => {
-  const { data, error } = await supabase
-    .from('watches')
-    .insert([watchData])
-    .select()
-    .single();
+  // Support both snake_case and camelCase column definitions
+  const dbPayload = {
+    name: watchData.name,
+    brand: watchData.brand,
+    price: watchData.price,
+    imageUrl: watchData.imageUrl,
+    description: watchData.description
+  };
 
-  if (error) {
-    console.error('Supabase insert error:', error);
-    // Fallback: save locally so the admin at least sees it
-    const local = { id: Date.now(), ...watchData };
-    setStoredWatches([local, ...getStoredWatches()]);
-    return local;
+  try {
+    const { data, error } = await supabase
+      .from('watches')
+      .insert([dbPayload])
+      .select();
+
+    if (error) {
+      console.error('Supabase insert failed with imageUrl, retrying with image_url:', error);
+      // Fallback if user's table has column image_url or image
+      const fallbackPayload = {
+        name: watchData.name,
+        brand: watchData.brand,
+        price: watchData.price,
+        image_url: watchData.imageUrl,
+        description: watchData.description
+      };
+      const retry = await supabase.from('watches').insert([fallbackPayload]).select();
+      if (retry.error) {
+        console.error('Supabase retry insert error:', retry.error);
+        throw retry.error;
+      }
+      if (retry.data && retry.data[0]) {
+        const item = normalizeWatch(retry.data[0]);
+        const updated = [item, ...getStoredWatches().filter((w) => String(w.id) !== String(item.id))];
+        setStoredWatches(updated);
+        return item;
+      }
+    }
+
+    if (data && data[0]) {
+      const item = normalizeWatch(data[0]);
+      const updated = [item, ...getStoredWatches().filter((w) => String(w.id) !== String(item.id))];
+      setStoredWatches(updated);
+      return item;
+    }
+  } catch (e) {
+    console.error('Failed to post watch to Supabase:', e);
   }
 
-  // Add to local cache immediately (real-time will confirm shortly)
-  setStoredWatches([data, ...getStoredWatches().filter((w) => String(w.id) !== String(data.id))]);
-  return data;
+  // Fallback so it doesn't crash if offline
+  const localWatch = {
+    id: Date.now(),
+    ...watchData
+  };
+  const updated = [localWatch, ...getStoredWatches().filter((w) => String(w.id) !== String(localWatch.id))];
+  setStoredWatches(updated);
+  return localWatch;
 };
 
-// Delete watch from Supabase → real-time will remove it on all devices
+// Delete watch from Supabase
 export const deleteWatch = async (id) => {
-  const { error } = await supabase.from('watches').delete().eq('id', id);
-
-  if (error) {
-    console.error('Supabase delete error:', error);
+  try {
+    const { error } = await supabase.from('watches').delete().eq('id', id);
+    if (error) console.error('Supabase delete error:', error);
+  } catch (e) {
+    console.error('Failed to delete watch from Supabase:', e);
   }
 
-  // Remove from local cache immediately
-  setStoredWatches(getStoredWatches().filter((w) => String(w.id) !== String(id)));
+  const updated = getStoredWatches().filter((w) => String(w.id) !== String(id));
+  setStoredWatches(updated);
   return true;
 };
 
