@@ -151,48 +151,20 @@ export const App = () => {
           backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.50) 0%, rgba(248,249,250,0.72) 70%, #f8f9fa 100%), url("images/header-bg.jpg")`,
           backgroundSize: 'cover',
           backgroundPosition: 'center top',
-          minHeight: '700px',
-          padding: '5rem 2rem 4rem',
+          minHeight: '520px',
+          padding: '3rem 2rem 3rem',
         }}
       >
         <div className="hero-subtitle">{t('tagline')}</div>
         <h1 className="hero-title">{t('heroTitle')}</h1>
         <p className="hero-desc">{t('heroSubtitle')}</p>
 
-        {/* EWE About Block */}
-        <div style={{
-          maxWidth: '760px',
-          margin: '2rem auto 2.5rem',
-          textAlign: 'left',
-          background: 'rgba(255,255,255,0.88)',
-          borderRadius: '12px',
-          padding: '2rem 2.4rem',
-          boxShadow: '0 4px 28px rgba(0,0,0,0.09)',
-          borderLeft: '4px solid #b8963e',
-        }}>
-          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', letterSpacing: '0.14em', marginBottom: '1rem', color: '#1a1a1a' }}>
-            TIMEPIECES
-          </h2>
-          <p style={{ color: '#333', lineHeight: '1.78', marginBottom: '0.9rem', fontSize: '0.97rem' }}>
-            European Watch Enthusiasts is a newly launched online community and media platform dedicated to the art, craft, and culture of fine timepieces. Created for those who appreciate the precision of horology and the stories behind every watch, EWE bridges passionate collectors, independent microbrands, and established maisons from across Europe.
-          </p>
-          <p style={{ color: '#333', lineHeight: '1.78', marginBottom: '0.9rem', fontSize: '0.97rem' }}>
-            Our mission is to celebrate the diversity of watchmaking — from legendary Swiss complications to the rising wave of European microbrands redefining elegance and innovation. Through curated articles, interviews, and exclusive content, we bring together enthusiasts who share a common passion: timeless design and mechanical beauty.
-          </p>
-          <p style={{ color: '#333', lineHeight: '1.78', fontSize: '0.97rem' }}>
-            Follow our journey and join the conversation on Instagram:{' '}
-            👉{' '}
-            <a
-              href="https://www.instagram.com/european_watch_enthusiasts?igsh=MW9kenFmMmd2ZzVsag=="
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: '#b8963e', fontWeight: '600', textDecoration: 'none' }}
-              onMouseOver={(e) => { e.currentTarget.style.textDecoration = 'underline'; }}
-              onMouseOut={(e) => { e.currentTarget.style.textDecoration = 'none'; }}
-            >
-              @european_watch_enthusiasts
-            </a>
-          </p>
+        {/* EWE About Block - clean, no card */}
+        <div style={{ maxWidth: '700px', margin: '1.8rem auto 2rem', textAlign: 'center' }}>
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', letterSpacing: '0.2em', marginBottom: '1rem', color: '#1a1a1a' }}>TIMEPIECES</h2>
+          <p style={{ color: '#444', lineHeight: '1.75', marginBottom: '0.8rem', fontSize: '0.91rem' }}>European Watch Enthusiasts is a newly launched online community and media platform dedicated to the art, craft, and culture of fine timepieces. Created for those who appreciate the precision of horology and the stories behind every watch, EWE bridges passionate collectors, independent microbrands, and established maisons from across Europe.</p>
+          <p style={{ color: '#444', lineHeight: '1.75', marginBottom: '0.8rem', fontSize: '0.91rem' }}>Our mission is to celebrate the diversity of watchmaking � from legendary Swiss complications to the rising wave of European microbrands redefining elegance and innovation. Through curated articles, interviews, and exclusive content, we bring together enthusiasts who share a common passion: timeless design and mechanical beauty.</p>
+          <p style={{ color: '#444', lineHeight: '1.75', fontSize: '0.91rem' }}>Follow our journey on Instagram: <a href="https://www.instagram.com/european_watch_enthusiasts?igsh=MW9kenFmMmd2ZzVsag==" target="_blank" rel="noopener noreferrer" style={{ color: '#b8963e', fontWeight: '600', textDecoration: 'none' }}>?? @european_watch_enthusiasts</a></p>
         </div>
 
         <button
