@@ -7,7 +7,7 @@ import { ConciergeModal } from './components/ConciergeModal';
 import { CartDrawer } from './components/CartDrawer';
 import { StripeCheckoutModal } from './components/StripeCheckout';
 import { useI18n } from './i18n/i18nContext';
-import { fetchWatches, postWatch as apiPostWatch, deleteWatch as apiDeleteWatch } from './api/watchApi';
+import { fetchWatches, postWatch as apiPostWatch, deleteWatch as apiDeleteWatch, getStoredWatches } from './api/watchApi';
 import { Search, Award, Shield, Truck } from 'lucide-react';
 
 export const App = () => {
@@ -28,7 +28,7 @@ export const App = () => {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [selectedConciergeWatch, setSelectedConciergeWatch] = useState(null);
 
-  // Initial fetch + Cross-tab Live Synchronization
+  // Initial fetch + Live Synchronization (cross-tab & Supabase real-time)
   useEffect(() => {
     let isMounted = true;
 
@@ -41,7 +41,7 @@ export const App = () => {
 
     loadWatches();
 
-    // Native storage event: automatically updates any open tab/window in real-time
+    // Sync when localStorage changes in another tab
     const handleStorageChange = (e) => {
       if (e.key === 'gershon_watches_catalog' && isMounted && e.newValue) {
         try {
@@ -55,11 +55,21 @@ export const App = () => {
       }
     };
 
+    // Custom event fired by watchApi when Supabase pushes a change
+    const handleSupabaseUpdate = () => {
+      const data = getStoredWatches();
+      if (isMounted && Array.isArray(data)) {
+        setWatches(data);
+      }
+    };
+
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('watches-updated', handleSupabaseUpdate);
 
     return () => {
       isMounted = false;
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('watches-updated', handleSupabaseUpdate);
     };
   }, []);
 
@@ -102,7 +112,7 @@ export const App = () => {
 
   // Filter watches
   const filteredWatches = watches.filter((watch) => {
-    const matchesSearch = 
+    const matchesSearch =
       watch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (watch.brand && watch.brand.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (watch.description && watch.description.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -119,7 +129,7 @@ export const App = () => {
   return (
     <div className="app-container">
       {/* Header with Navigation & Admin Status */}
-      <Header 
+      <Header
         isAdminLoggedIn={isAdminLoggedIn}
         onOpenAdmin={() => {
           if (!isAdminLoggedIn) {
@@ -134,18 +144,59 @@ export const App = () => {
         cartCount={cartItems.length}
       />
 
-      {/* Hero Section with Light Translucent Background Overlay */}
-      <section 
+      {/* Hero Section – bigger background image + EWE text block */}
+      <section
         className="hero-section"
         style={{
-          backgroundImage: `linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(248, 249, 250, 0.94) 75%, #f8f9fa 100%), url("images/header-bg.jpg")`
+          backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.50) 0%, rgba(248,249,250,0.72) 70%, #f8f9fa 100%), url("images/header-bg.jpg")`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center top',
+          minHeight: '700px',
+          padding: '5rem 2rem 4rem',
         }}
       >
         <div className="hero-subtitle">{t('tagline')}</div>
         <h1 className="hero-title">{t('heroTitle')}</h1>
         <p className="hero-desc">{t('heroSubtitle')}</p>
-        <button 
-          className="btn-primary" 
+
+        {/* EWE About Block */}
+        <div style={{
+          maxWidth: '760px',
+          margin: '2rem auto 2.5rem',
+          textAlign: 'left',
+          background: 'rgba(255,255,255,0.88)',
+          borderRadius: '12px',
+          padding: '2rem 2.4rem',
+          boxShadow: '0 4px 28px rgba(0,0,0,0.09)',
+          borderLeft: '4px solid #b8963e',
+        }}>
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', letterSpacing: '0.14em', marginBottom: '1rem', color: '#1a1a1a' }}>
+            TIMEPIECES
+          </h2>
+          <p style={{ color: '#333', lineHeight: '1.78', marginBottom: '0.9rem', fontSize: '0.97rem' }}>
+            European Watch Enthusiasts is a newly launched online community and media platform dedicated to the art, craft, and culture of fine timepieces. Created for those who appreciate the precision of horology and the stories behind every watch, EWE bridges passionate collectors, independent microbrands, and established maisons from across Europe.
+          </p>
+          <p style={{ color: '#333', lineHeight: '1.78', marginBottom: '0.9rem', fontSize: '0.97rem' }}>
+            Our mission is to celebrate the diversity of watchmaking — from legendary Swiss complications to the rising wave of European microbrands redefining elegance and innovation. Through curated articles, interviews, and exclusive content, we bring together enthusiasts who share a common passion: timeless design and mechanical beauty.
+          </p>
+          <p style={{ color: '#333', lineHeight: '1.78', fontSize: '0.97rem' }}>
+            Follow our journey and join the conversation on Instagram:{' '}
+            👉{' '}
+            <a
+              href="https://www.instagram.com/european_watch_enthusiasts?igsh=MW9kenFmMmd2ZzVsag=="
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#b8963e', fontWeight: '600', textDecoration: 'none' }}
+              onMouseOver={(e) => { e.currentTarget.style.textDecoration = 'underline'; }}
+              onMouseOut={(e) => { e.currentTarget.style.textDecoration = 'none'; }}
+            >
+              @european_watch_enthusiasts
+            </a>
+          </p>
+        </div>
+
+        <button
+          className="btn-primary"
           onClick={() => {
             const el = document.getElementById('catalog-section');
             if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -159,9 +210,9 @@ export const App = () => {
       <div className="controls-bar" id="catalog-section">
         <div className="search-box">
           <Search size={18} className="search-icon" />
-          <input 
-            type="text" 
-            className="search-input" 
+          <input
+            type="text"
+            className="search-input"
             placeholder={t('searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -170,19 +221,19 @@ export const App = () => {
         </div>
 
         <div className="filter-group">
-          <button 
+          <button
             className={`filter-btn ${filterType === 'all' ? 'active' : ''}`}
             onClick={() => setFilterType('all')}
           >
             {t('filterAll')}
           </button>
-          <button 
+          <button
             className={`filter-btn ${filterType === 'priced' ? 'active' : ''}`}
             onClick={() => setFilterType('priced')}
           >
             {t('filterPriceAvailable')}
           </button>
-          <button 
+          <button
             className={`filter-btn ${filterType === 'por' ? 'active' : ''}`}
             onClick={() => setFilterType('por')}
           >
@@ -196,7 +247,7 @@ export const App = () => {
         {filteredWatches.length > 0 ? (
           <div className="watch-grid">
             {filteredWatches.map((watch) => (
-              <WatchCard 
+              <WatchCard
                 key={watch.id}
                 watch={watch}
                 isAdminLoggedIn={isAdminLoggedIn}
@@ -224,16 +275,16 @@ export const App = () => {
               The showcase is currently being curated. Authenticate as Owner Admin to post new luxury timepieces to the catalog.
             </p>
             {!isAdminLoggedIn && (
-              <button 
-                className="btn-primary" 
+              <button
+                className="btn-primary"
                 onClick={() => setIsAdminLoginOpen(true)}
               >
                 Authenticate as Owner Admin
               </button>
             )}
             {isAdminLoggedIn && (
-              <button 
-                className="btn-primary" 
+              <button
+                className="btn-primary"
                 onClick={() => setIsAdminOpen(true)}
               >
                 + Post First Timepiece
@@ -274,7 +325,7 @@ export const App = () => {
       </footer>
 
       {/* Admin Passcode Authentication Modal */}
-      <AdminLoginModal 
+      <AdminLoginModal
         isOpen={isAdminLoginOpen}
         onClose={() => setIsAdminLoginOpen(false)}
         onLoginSuccess={() => {
@@ -284,21 +335,21 @@ export const App = () => {
       />
 
       {/* Admin Post Watch Modal */}
-      <AdminModal 
+      <AdminModal
         isOpen={isAdminOpen}
         onClose={() => setIsAdminOpen(false)}
         onPostWatch={handlePostWatch}
       />
 
       {/* Concierge Inquiry Modal for Null Prices */}
-      <ConciergeModal 
+      <ConciergeModal
         isOpen={!!selectedConciergeWatch}
         watch={selectedConciergeWatch}
         onClose={() => setSelectedConciergeWatch(null)}
       />
 
       {/* Shopping Bag Drawer */}
-      <CartDrawer 
+      <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         cartItems={cartItems}
@@ -310,7 +361,7 @@ export const App = () => {
       />
 
       {/* Stripe Payment Modal */}
-      <StripeCheckoutModal 
+      <StripeCheckoutModal
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
         totalAmount={cartTotalAmount}
