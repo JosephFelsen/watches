@@ -1,32 +1,7 @@
 // watchApi.js – Supabase integration for live watches catalog
 import { supabase } from '../supabaseClient';
 
-const LOCAL_STORAGE_KEY = 'gershon_watches_catalog';
 export const initialWatches = [];
-
-// ── Local storage helpers ─────────────────────────────────────────────────────
-
-export const getStoredWatches = () => {
-  try {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (saved !== null) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) return parsed;
-    }
-  } catch (e) {
-    console.warn('localStorage read error:', e);
-  }
-  return [];
-};
-
-export const setStoredWatches = (watches) => {
-  try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(watches));
-    window.dispatchEvent(new CustomEvent('watches-updated'));
-  } catch (e) {
-    console.warn('localStorage write error:', e);
-  }
-};
 
 // ── Normalize DB row to frontend watch format ─────────────────────────────────
 const normalizeWatch = (w) => {
@@ -36,43 +11,38 @@ const normalizeWatch = (w) => {
     name: w.name || '',
     brand: w.brand || '',
     price: w.price !== null && w.price !== undefined ? parseFloat(w.price) : null,
-    imageUrl: w.imageUrl || w.image_url || w.image || 'images/watch1.png',
+    imageUrl: w.image || w.image_url || w.imageUrl || 'images/watch1.png',
     description: w.description || '',
     created_at: w.created_at
   };
+};
+
+// ── Helper to notify App.jsx of any updates ──────────────────────────────────
+const dispatchUpdate = () => {
+  window.dispatchEvent(new CustomEvent('watches-updated'));
+};
+
+// Memory cache only for the current active tab
+let memoryWatches = [];
+
+export const getStoredWatches = () => memoryWatches;
+
+export const setStoredWatches = (watches) => {
+  memoryWatches = watches;
+  dispatchUpdate();
 };
 
 // ── Supabase real-time subscription ──────────────────────────────────────────
 const subscribeToSupabase = () => {
   supabase
     .channel('watches-realtime')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'watches' }, (payload) => {
-      console.log('[Supabase] INSERT received', payload.new);
-      const newWatch = normalizeWatch(payload.new);
-      const current = getStoredWatches();
-      if (!current.find((w) => String(w.id) === String(newWatch.id))) {
-        setStoredWatches([newWatch, ...current]);
-      }
-    })
-    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'watches' }, (payload) => {
-      console.log('[Supabase] DELETE received', payload.old);
-      if (payload.old && payload.old.id) {
-        const updated = getStoredWatches().filter((w) => String(w.id) !== String(payload.old.id));
-        setStoredWatches(updated);
-      } else {
-        // Refetch full table if payload.old doesn't contain the id
-        fetchWatches();
-      }
-    })
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'watches' }, (payload) => {
-      const updatedWatch = normalizeWatch(payload.new);
-      const updated = getStoredWatches().map((w) =>
-        String(w.id) === String(updatedWatch.id) ? updatedWatch : w
-      );
-      setStoredWatches(updated);
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'watches' }, async (payload) => {
+      console.log('[Supabase Realtime Event]', payload);
+      // Whenever ANY device adds, edits, or deletes a watch, refetch clean from Supabase
+      await fetchWatches();
     })
     .subscribe((status) => {
-      console.log('[Supabase] Realtime status:', status);
+      console.log('[Supabase Realtime Status]:', status);
     });
 };
 
@@ -80,7 +50,7 @@ subscribeToSupabase();
 
 // ── API functions ─────────────────────────────────────────────────────────────
 
-// Fetch all watches from Supabase
+// Fetch all watches from Supabase (sole source of truth across all devices)
 export const fetchWatches = async () => {
   try {
     const { data, error } = await supabase
@@ -95,87 +65,75 @@ export const fetchWatches = async () => {
 
     if (Array.isArray(data)) {
       const normalized = data.map(normalizeWatch);
-      setStoredWatches(normalized);
+      memoryWatches = normalized;
+      dispatchUpdate();
       return normalized;
     }
   } catch (e) {
-    console.warn('Supabase fetch failed, falling back to local storage cache:', e);
+    console.warn('Supabase fetch failed:', e);
   }
-  return getStoredWatches();
+  return memoryWatches;
 };
 
 // Insert watch into Supabase
 export const postWatch = async (watchData) => {
-  // Support both snake_case and camelCase column definitions
-  const dbPayload = {
+  // Your database has column: image (or image_url, imageUrl)
+  const payloadWithImage = {
     name: watchData.name,
     brand: watchData.brand,
     price: watchData.price,
-    imageUrl: watchData.imageUrl,
+    image: watchData.imageUrl,
     description: watchData.description
   };
 
   try {
     const { data, error } = await supabase
       .from('watches')
-      .insert([dbPayload])
+      .insert([payloadWithImage])
       .select();
 
     if (error) {
-      console.error('Supabase insert failed with imageUrl, retrying with image_url:', error);
-      // Fallback if user's table has column image_url or image
-      const fallbackPayload = {
+      console.warn('Insert with "image" failed, trying with "image_url" / "imageUrl":', error);
+      const fallback = {
         name: watchData.name,
         brand: watchData.brand,
         price: watchData.price,
         image_url: watchData.imageUrl,
+        imageUrl: watchData.imageUrl,
         description: watchData.description
       };
-      const retry = await supabase.from('watches').insert([fallbackPayload]).select();
-      if (retry.error) {
-        console.error('Supabase retry insert error:', retry.error);
-        throw retry.error;
-      }
+      const retry = await supabase.from('watches').insert([fallback]).select();
+      if (retry.error) throw retry.error;
       if (retry.data && retry.data[0]) {
-        const item = normalizeWatch(retry.data[0]);
-        const updated = [item, ...getStoredWatches().filter((w) => String(w.id) !== String(item.id))];
-        setStoredWatches(updated);
-        return item;
+        await fetchWatches();
+        return normalizeWatch(retry.data[0]);
       }
     }
 
     if (data && data[0]) {
-      const item = normalizeWatch(data[0]);
-      const updated = [item, ...getStoredWatches().filter((w) => String(w.id) !== String(item.id))];
-      setStoredWatches(updated);
-      return item;
+      await fetchWatches();
+      return normalizeWatch(data[0]);
     }
   } catch (e) {
-    console.error('Failed to post watch to Supabase:', e);
+    alert('Failed to save to database. Please check your internet connection or Supabase status: ' + (e.message || e));
+    console.error('Post watch failed:', e);
   }
 
-  // Fallback so it doesn't crash if offline
-  const localWatch = {
-    id: Date.now(),
-    ...watchData
-  };
-  const updated = [localWatch, ...getStoredWatches().filter((w) => String(w.id) !== String(localWatch.id))];
-  setStoredWatches(updated);
-  return localWatch;
+  return null;
 };
 
 // Delete watch from Supabase
 export const deleteWatch = async (id) => {
   try {
     const { error } = await supabase.from('watches').delete().eq('id', id);
-    if (error) console.error('Supabase delete error:', error);
+    if (error) throw error;
+    await fetchWatches();
+    return true;
   } catch (e) {
-    console.error('Failed to delete watch from Supabase:', e);
+    console.error('Delete watch failed:', e);
+    alert('Failed to delete from database: ' + (e.message || e));
   }
-
-  const updated = getStoredWatches().filter((w) => String(w.id) !== String(id));
-  setStoredWatches(updated);
-  return true;
+  return false;
 };
 
 export const createPaymentIntent = async (amount) => {
