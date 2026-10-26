@@ -1,9 +1,7 @@
 // watchApi.js – Supabase integration for live watches catalog
 import { supabase } from '../supabaseClient';
 
-const API_BASE_URL = '/api';
 const LOCAL_STORAGE_KEY = 'gershon_watches_catalog';
-
 export const initialWatches = [];
 
 // ── Local storage helpers ─────────────────────────────────────────────────────
@@ -16,7 +14,7 @@ export const getStoredWatches = () => {
       if (Array.isArray(parsed)) return parsed;
     }
   } catch (e) {
-    console.warn('Failed to read from localStorage:', e);
+    console.warn('localStorage read error:', e);
   }
   return [];
 };
@@ -24,90 +22,98 @@ export const getStoredWatches = () => {
 export const setStoredWatches = (watches) => {
   try {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(watches));
-    // Notify React components listening for live updates
     window.dispatchEvent(new CustomEvent('watches-updated'));
   } catch (e) {
-    console.warn('Failed to save to localStorage:', e);
+    console.warn('localStorage write error:', e);
   }
 };
 
 // ── Supabase real-time subscription ──────────────────────────────────────────
+// Fires whenever ANY device adds or deletes a watch → updates UI instantly
 
 const subscribeToSupabase = () => {
   supabase
-    .channel('public:watches')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'watches' }, (payload) => {
+    .channel('watches-realtime')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'watches' }, (payload) => {
+      console.log('[Supabase] INSERT received', payload.new);
       const current = getStoredWatches();
-      let updated = current;
-
-      if (payload.eventType === 'INSERT') {
-        if (!current.find((w) => w.id === payload.new.id)) {
-          updated = [payload.new, ...current];
-        }
-      } else if (payload.eventType === 'DELETE') {
-        updated = current.filter((w) => w.id !== payload.old.id);
-      } else if (payload.eventType === 'UPDATE') {
-        updated = current.map((w) => (w.id === payload.new.id ? payload.new : w));
+      if (!current.find((w) => String(w.id) === String(payload.new.id))) {
+        setStoredWatches([payload.new, ...current]);
       }
-
+    })
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'watches' }, (payload) => {
+      console.log('[Supabase] DELETE received', payload.old);
+      const updated = getStoredWatches().filter((w) => String(w.id) !== String(payload.old.id));
       setStoredWatches(updated);
     })
-    .subscribe();
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'watches' }, (payload) => {
+      const updated = getStoredWatches().map((w) =>
+        String(w.id) === String(payload.new.id) ? payload.new : w
+      );
+      setStoredWatches(updated);
+    })
+    .subscribe((status) => {
+      console.log('[Supabase] Realtime status:', status);
+    });
 };
 
-// Start subscription once when module loads
 subscribeToSupabase();
 
 // ── API functions ─────────────────────────────────────────────────────────────
 
+// Fetch all watches from Supabase (source of truth for every device)
 export const fetchWatches = async () => {
   try {
-    const { data, error } = await supabase.from('watches').select('*');
-    if (!error && Array.isArray(data) && data.length > 0) {
-      setStoredWatches(data);
-      return data;
-    }
+    const { data, error } = await supabase
+      .from('watches')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Always trust Supabase — overwrite local cache
+    setStoredWatches(data ?? []);
+    return data ?? [];
   } catch (e) {
-    console.warn('Supabase fetch error:', e);
+    console.warn('Supabase fetch failed, using local cache:', e);
+    return getStoredWatches();
   }
-  return getStoredWatches();
 };
 
+// Insert watch into Supabase → real-time will push it to all other devices
 export const postWatch = async (watchData) => {
-  const newWatch = { id: Date.now(), ...watchData };
-  try {
-    const { error } = await supabase.from('watches').insert([newWatch]);
-    if (error) throw error;
-  } catch (e) {
-    console.warn('Supabase insert error (storing locally):', e);
+  const { data, error } = await supabase
+    .from('watches')
+    .insert([watchData])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Supabase insert error:', error);
+    // Fallback: save locally so the admin at least sees it
+    const local = { id: Date.now(), ...watchData };
+    setStoredWatches([local, ...getStoredWatches()]);
+    return local;
   }
-  const updated = [newWatch, ...getStoredWatches().filter((w) => w.id !== newWatch.id)];
-  setStoredWatches(updated);
-  return newWatch;
+
+  // Add to local cache immediately (real-time will confirm shortly)
+  setStoredWatches([data, ...getStoredWatches().filter((w) => String(w.id) !== String(data.id))]);
+  return data;
 };
 
+// Delete watch from Supabase → real-time will remove it on all devices
 export const deleteWatch = async (id) => {
-  try {
-    const { error } = await supabase.from('watches').delete().eq('id', id);
-    if (error) throw error;
-  } catch (e) {
-    console.warn('Supabase delete error (deleting locally):', e);
+  const { error } = await supabase.from('watches').delete().eq('id', id);
+
+  if (error) {
+    console.error('Supabase delete error:', error);
   }
-  const updated = getStoredWatches().filter((w) => w.id !== id);
-  setStoredWatches(updated);
+
+  // Remove from local cache immediately
+  setStoredWatches(getStoredWatches().filter((w) => String(w.id) !== String(id)));
   return true;
 };
 
 export const createPaymentIntent = async (amount) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/checkout/create-payment-intent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount, currency: 'eur' }),
-    });
-    if (!response.ok) throw new Error('Failed to create payment intent');
-    return await response.json();
-  } catch (error) {
-    return { clientSecret: 'mock_client_secret_test_key' };
-  }
+  return { clientSecret: 'mock_client_secret_test_key' };
 };
