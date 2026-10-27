@@ -42,7 +42,7 @@ export const AdminModal = ({ isOpen, onClose, onPostWatch }) => {
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          const compressedDataUrl = canvas.toDataURL('image/png');
           setImagePreview(compressedDataUrl);
           setFormData((prev) => ({ ...prev, imageUrl: compressedDataUrl }));
         };
