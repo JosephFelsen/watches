@@ -701,12 +701,97 @@ a {
   .header-container {
     flex-direction: column;
     gap: 1rem;
+    padding: 0.5rem 0;
+  }
+  .site-header {
+    padding: 0.65rem 1rem;
+  }
+  .hero-section {
+    padding: 2.5rem 1rem 2rem;
+    min-height: auto;
   }
   .controls-bar {
     flex-direction: column;
     align-items: stretch;
+    margin: 1.5rem auto 1.5rem;
+    padding: 0 1rem;
+    gap: 1rem;
   }
   .search-box {
     max-width: 100%;
+    min-width: 100%;
+  }
+  .filter-group {
+    overflow-x: auto;
+    white-space: nowrap;
+    justify-content: flex-start;
+    padding: 3px;
+  }
+  .filter-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.78rem;
+  }
+  /* 2 watches side by side with neat margins */
+  .catalog-container {
+    padding: 0 1rem;
+    margin: 0 auto 3rem;
+  }
+  .watch-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  .watch-card {
+    border-radius: 12px;
+  }
+  .watch-image-wrapper {
+    height: 170px;
+    padding: 0.75rem;
+  }
+  .badge-brand {
+    top: 0.5rem;
+    left: 0.5rem;
+    padding: 0.2rem 0.45rem;
+    font-size: 0.65rem;
+  }
+  .badge-por {
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.2rem 0.45rem;
+    font-size: 0.65rem;
+  }
+  .watch-card-body {
+    padding: 0.75rem;
+  }
+  .watch-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.3rem;
+  }
+  .watch-desc {
+    font-size: 0.75rem;
+    margin-bottom: 0.75rem;
+    -webkit-line-clamp: 2;
+  }
+  .watch-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding-top: 0.6rem;
+  }
+  .price-tag, .price-null-tag {
+    font-size: 0.85rem;
+    text-align: center;
+    width: 100%;
+    padding: 0.3rem 0.5rem;
+  }
+  .watch-card-footer button {
+    width: 100%;
+    justify-content: center;
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+  }
+  .guarantee-banner {
+    margin: 0 1rem 3rem;
+    padding: 1.5rem 1rem;
+    gap: 1.5rem;
   }
 }
