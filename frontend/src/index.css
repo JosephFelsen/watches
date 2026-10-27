@@ -796,8 +796,13 @@ a {
     min-width: 0;
   }
   .watch-image-wrapper {
-    height: 155px;
-    padding: 0.6rem;
+    height: 175px;
+    padding: 0;
+  }
+  .watch-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
   .badge-brand {
     top: 0.4rem;
