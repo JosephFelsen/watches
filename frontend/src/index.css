@@ -23,13 +23,24 @@
   padding: 0;
 }
 
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   background-color: var(--bg-dark);
   color: var(--text-main);
   font-family: var(--font-sans);
   min-height: 100vh;
-  overflow-x: hidden;
   line-height: 1.6;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* Typography & Links */
@@ -834,7 +845,8 @@ a {
     padding: 0.35rem 0.5rem;
   }
   .guarantee-banner {
-    margin: 0 1.25rem 3rem;
+    margin: 0 auto 3rem;
+    max-width: calc(100% - 2.5rem);
     padding: 1.5rem 1rem;
     gap: 1.5rem;
   }
