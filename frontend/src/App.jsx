@@ -144,7 +144,7 @@ export const App = () => {
         cartCount={cartItems.length}
       />
 
-      {/* Hero Section â€“ bigger background image + EWE text block */}
+      {/* Hero Section – bigger background image + EWE text block */}
       <section
         className="hero-section"
         style={{
@@ -163,8 +163,8 @@ export const App = () => {
         <div style={{ maxWidth: '700px', margin: '1.8rem auto 2rem', textAlign: 'center' }}>
           <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', letterSpacing: '0.2em', marginBottom: '1rem', color: '#1a1a1a' }}>TIMEPIECES</h2>
           <p style={{ color: '#444', lineHeight: '1.75', marginBottom: '0.8rem', fontSize: '0.91rem' }}>European Watch Enthusiasts is a newly launched online community and media platform dedicated to the art, craft, and culture of fine timepieces. Created for those who appreciate the precision of horology and the stories behind every watch, EWE bridges passionate collectors, independent microbrands, and established maisons from across Europe.</p>
-          <p style={{ color: '#444', lineHeight: '1.75', marginBottom: '0.8rem', fontSize: '0.91rem' }}>Our mission is to celebrate the diversity of watchmaking — from legendary Swiss complications to the rising wave of European microbrands redefining elegance and innovation. Through curated articles, interviews, and exclusive content, we bring together enthusiasts who share a common passion: timeless design and mechanical beauty.</p>
-          <p style={{ color: '#444', lineHeight: '1.75', fontSize: '0.91rem' }}>Follow our journey on Instagram: <a href="https://www.instagram.com/european_watch_enthusiasts?igsh=MW9kenFmMmd2ZzVsag==" target="_blank" rel="noopener noreferrer" style={{ color: '#b8963e', fontWeight: '600', textDecoration: 'none' }}>?? @european_watch_enthusiasts</a></p>
+          <p style={{ color: '#444', lineHeight: '1.75', marginBottom: '0.8rem', fontSize: '0.91rem' }}>Our mission is to celebrate the diversity of watchmaking ? from legendary Swiss complications to the rising wave of European microbrands redefining elegance and innovation. Through curated articles, interviews, and exclusive content, we bring together enthusiasts who share a common passion: timeless design and mechanical beauty.</p>
+          <p style={{ color: '#444', lineHeight: '1.75', fontSize: '0.91rem' }}>Follow our journey on Instagram: <a href="https://www.instagram.com/european_watch_enthusiasts?igsh=MW9kenFmMmd2ZzVsag==" target="_blank" rel="noopener noreferrer" style={{ color: '#b8963e', fontWeight: '600', textDecoration: 'none' }}>@european_watch_enthusiasts</a></p>
         </div>
 
         <button
