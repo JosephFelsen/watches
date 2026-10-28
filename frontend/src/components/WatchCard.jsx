@@ -17,10 +17,6 @@ export const WatchCard = ({ watch, isAdminLoggedIn, onAddToCart, onDeleteWatch, 
   return (
     <div className="watch-card" id={`watch-card-${watch.id}`}>
       <div className="watch-image-wrapper">
-        <span className="badge-brand">{watch.brand || 'Gershon Atelier'}</span>
-        {isPriceNull && (
-          <span className="badge-por">{t('priceOnRequest')}</span>
-        )}
         <img 
           src={watch.imageUrl || 'images/watch1.png'} 
           alt={watch.name} 
@@ -36,45 +32,42 @@ export const WatchCard = ({ watch, isAdminLoggedIn, onAddToCart, onDeleteWatch, 
         <p className="watch-desc">{watch.description || 'Exclusive luxury horological timepiece.'}</p>
 
         <div className="watch-card-footer">
-          <div>
+          <div className="watch-price-row">
             {isPriceNull ? (
-              <div className="price-null-tag">{t('priceOnRequest')}</div>
+              <span className="price-null-tag">{t('priceOnRequest')}</span>
             ) : (
-              <div className="price-tag">{formatPrice(watch.price)}</div>
+              <span className="price-tag">{formatPrice(watch.price)}</span>
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <div className="watch-actions-row">
             {isPriceNull ? (
               <button 
-                className="btn-secondary" 
+                className="btn-concierge-minimal" 
                 onClick={() => onOpenConcierge(watch)}
-                style={{ fontSize: '0.85rem', padding: '0.5rem 0.9rem' }}
               >
-                <Mail size={16} />
-                <span>{t('contactConcierge')}</span>
+                <Mail size={15} strokeWidth={1.5} />
+                <span>{t('contactConcierge') || 'Inquire Concierge'}</span>
               </button>
             ) : (
               <button 
-                className="btn-primary" 
+                className="btn-concierge-minimal" 
                 onClick={() => onAddToCart(watch)}
-                style={{ fontSize: '0.85rem', padding: '0.5rem 0.9rem' }}
                 id={`add-to-cart-${watch.id}`}
               >
-                <ShoppingBag size={16} />
+                <ShoppingBag size={15} strokeWidth={1.5} />
                 <span>{t('addToCart')}</span>
               </button>
             )}
 
-            {/* Delete button only visible when Owner Admin is logged in! */}
             {isAdminLoggedIn && (
               <button 
-                className="btn-danger" 
+                className="btn-delete-minimal" 
                 onClick={() => onDeleteWatch(watch.id)}
                 title={t('deleteWatch')}
                 id={`delete-watch-${watch.id}`}
               >
-                <Trash2 size={16} />
+                <Trash2 size={15} strokeWidth={1.5} />
               </button>
             )}
           </div>
