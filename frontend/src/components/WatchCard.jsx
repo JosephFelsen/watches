@@ -1,9 +1,10 @@
-import React from 'react';
-import { ShoppingBag, Trash2, Mail } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShoppingBag, Trash2, Mail, Share2, Check } from 'lucide-react';
 import { useI18n } from '../i18n/i18nContext';
 
-export const WatchCard = ({ watch, isAdminLoggedIn, onAddToCart, onDeleteWatch, onOpenConcierge }) => {
+export const WatchCard = ({ watch, isAdminLoggedIn, onAddToCart, onDeleteWatch, onOpenConcierge, onSelectWatch }) => {
   const { t } = useI18n();
+  const [copied, setCopied] = useState(false);
 
   const isPriceNull = watch.price === null || watch.price === undefined || watch.price === '';
 
@@ -14,8 +15,47 @@ export const WatchCard = ({ watch, isAdminLoggedIn, onAddToCart, onDeleteWatch, 
     }).format(amount);
   };
 
+  const handleShare = async (e) => {
+    e.stopPropagation();
+    const shareData = {
+      title: `${watch.name} | Gershon Watches`,
+      text: `${watch.brand ? watch.brand + ' - ' : ''}${watch.name}`,
+      url: window.location.href
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (err) {
+        if (err.name !== 'AbortError') console.warn(err);
+      }
+    }
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(window.location.href);
+      } else {
+        const input = document.createElement('input');
+        input.value = window.location.href;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.warn(err);
+    }
+  };
+
   return (
-    <div className="watch-card" id={`watch-card-${watch.id}`}>
+    <div 
+      className="watch-card" 
+      id={`watch-card-${watch.id}`}
+      onClick={() => onSelectWatch && onSelectWatch(watch)}
+    >
       <div className="watch-image-wrapper">
         <img 
           src={watch.imageUrl || 'images/watch1.png'} 
@@ -25,6 +65,14 @@ export const WatchCard = ({ watch, isAdminLoggedIn, onAddToCart, onDeleteWatch, 
             e.target.src = 'images/watch1.png';
           }}
         />
+        {/* Quick share button on hover */}
+        <button 
+          className="btn-quick-share" 
+          onClick={handleShare}
+          title="Share timepiece"
+        >
+          {copied ? <Check size={14} color="var(--forest-green)" /> : <Share2 size={14} />}
+        </button>
       </div>
 
       <div className="watch-card-body">
@@ -44,7 +92,10 @@ export const WatchCard = ({ watch, isAdminLoggedIn, onAddToCart, onDeleteWatch, 
             {isPriceNull ? (
               <button 
                 className="btn-concierge-minimal" 
-                onClick={() => onOpenConcierge(watch)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenConcierge(watch);
+                }}
               >
                 <Mail size={15} strokeWidth={1.5} />
                 <span>{t('contactConcierge') || 'Inquire Concierge'}</span>
@@ -52,7 +103,10 @@ export const WatchCard = ({ watch, isAdminLoggedIn, onAddToCart, onDeleteWatch, 
             ) : (
               <button 
                 className="btn-concierge-minimal" 
-                onClick={() => onAddToCart(watch)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddToCart(watch);
+                }}
                 id={`add-to-cart-${watch.id}`}
               >
                 <ShoppingBag size={15} strokeWidth={1.5} />
@@ -63,7 +117,10 @@ export const WatchCard = ({ watch, isAdminLoggedIn, onAddToCart, onDeleteWatch, 
             {isAdminLoggedIn && (
               <button 
                 className="btn-delete-minimal" 
-                onClick={() => onDeleteWatch(watch.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteWatch(watch.id);
+                }}
                 title={t('deleteWatch')}
                 id={`delete-watch-${watch.id}`}
               >

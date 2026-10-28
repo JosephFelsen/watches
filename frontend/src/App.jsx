@@ -4,6 +4,7 @@ import { WatchCard } from './components/WatchCard';
 import { AdminModal } from './components/AdminModal';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { ConciergeModal } from './components/ConciergeModal';
+import { WatchDetailModal } from './components/WatchDetailModal';
 import { CartDrawer } from './components/CartDrawer';
 import { StripeCheckoutModal } from './components/StripeCheckout';
 import { useI18n } from './i18n/i18nContext';
@@ -27,6 +28,7 @@ export const App = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [selectedConciergeWatch, setSelectedConciergeWatch] = useState(null);
+  const [selectedDetailWatch, setSelectedDetailWatch] = useState(null);
 
   // Initial fetch + Live Synchronization (cross-tab & Supabase real-time)
   useEffect(() => {
@@ -80,7 +82,9 @@ export const App = () => {
       return;
     }
     const created = await apiPostWatch(newWatchData);
-    setWatches((prev) => [created, ...prev.filter((w) => w.id !== created.id)]);
+    if (created) {
+      setWatches((prev) => [created, ...prev.filter((w) => w.id !== created.id)]);
+    }
   };
 
   // Delete Watch Handler (requires admin authorization)
@@ -92,6 +96,9 @@ export const App = () => {
     if (window.confirm(t('deleteConfirm'))) {
       await apiDeleteWatch(id);
       setWatches((prev) => prev.filter((w) => w.id !== id));
+      if (selectedDetailWatch && selectedDetailWatch.id === id) {
+        setSelectedDetailWatch(null);
+      }
     }
   };
 
@@ -144,15 +151,11 @@ export const App = () => {
         cartCount={cartItems.length}
       />
 
-      {/* Hero Section � bigger background image + EWE text block */}
+      {/* Hero Section – bigger background image + EWE text block */}
       <section
         className="hero-section"
         style={{
-          backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.50) 0%, rgba(248,249,250,0.72) 70%, #f8f9fa 100%), url("images/header-bg.jpg")`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center top',
-          minHeight: '520px',
-          padding: '3rem 2rem 3rem',
+          backgroundImage: `linear-gradient(180deg, rgba(251,251,249,0.55) 0%, rgba(251,251,249,0.80) 70%, #fbfbf9 100%), url("images/header-bg.jpg")`,
         }}
       >
         <div className="hero-subtitle">{t('tagline')}</div>
@@ -163,7 +166,7 @@ export const App = () => {
         <div style={{ maxWidth: '700px', margin: '1.8rem auto 2rem', textAlign: 'center' }}>
           <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', letterSpacing: '0.2em', marginBottom: '1rem', color: '#1a1a1a' }}>TIMEPIECES</h2>
           <p style={{ color: '#444', lineHeight: '1.75', marginBottom: '0.8rem', fontSize: '0.91rem' }}>European Watch Enthusiasts is a newly launched online community and media platform dedicated to the art, craft, and culture of fine timepieces. Created for those who appreciate the precision of horology and the stories behind every watch, EWE bridges passionate collectors, independent microbrands, and established maisons from across Europe.</p>
-          <p style={{ color: '#444', lineHeight: '1.75', marginBottom: '0.8rem', fontSize: '0.91rem' }}>Our mission is to celebrate the diversity of watchmaking ? from legendary Swiss complications to the rising wave of European microbrands redefining elegance and innovation. Through curated articles, interviews, and exclusive content, we bring together enthusiasts who share a common passion: timeless design and mechanical beauty.</p>
+          <p style={{ color: '#444', lineHeight: '1.75', marginBottom: '0.8rem', fontSize: '0.91rem' }}>Our mission is to celebrate the diversity of watchmaking — from legendary Swiss complications to the rising wave of European microbrands redefining elegance and innovation. Through curated articles, interviews, and exclusive content, we bring together enthusiasts who share a common passion: timeless design and mechanical beauty.</p>
           <p style={{ color: '#444', lineHeight: '1.75', fontSize: '0.91rem' }}>Follow our journey on Instagram: <a href="https://www.instagram.com/european_watch_enthusiasts?igsh=MW9kenFmMmd2ZzVsag==" target="_blank" rel="noopener noreferrer" style={{ color: '#b8963e', fontWeight: '600', textDecoration: 'none' }}>@european_watch_enthusiasts</a></p>
         </div>
 
@@ -226,6 +229,7 @@ export const App = () => {
                 onAddToCart={handleAddToCart}
                 onDeleteWatch={handleDeleteWatch}
                 onOpenConcierge={(w) => setSelectedConciergeWatch(w)}
+                onSelectWatch={(w) => setSelectedDetailWatch(w)}
               />
             ))}
           </div>
@@ -235,7 +239,7 @@ export const App = () => {
             padding: '4rem 2rem',
             background: '#ffffff',
             borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-gold)',
+            border: '1px solid var(--border-subtle)',
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
             maxWidth: '650px',
             margin: '0 auto'
@@ -295,6 +299,15 @@ export const App = () => {
       <footer className="site-footer">
         <p>{t('footerText')}</p>
       </footer>
+
+      {/* Watch Detail & Big Image Modal */}
+      <WatchDetailModal
+        watch={selectedDetailWatch}
+        isOpen={!!selectedDetailWatch}
+        onClose={() => setSelectedDetailWatch(null)}
+        onAddToCart={handleAddToCart}
+        onOpenConcierge={(w) => setSelectedConciergeWatch(w)}
+      />
 
       {/* Admin Passcode Authentication Modal */}
       <AdminLoginModal
