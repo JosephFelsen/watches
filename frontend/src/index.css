@@ -342,16 +342,23 @@ a {
 
 /* Catalog Grid (Reference: 2 columns, open borders, no cards, subtle dividers) */
 .catalog-container {
-  max-width: 960px;
+  max-width: 1320px;
   margin: 0 auto 5rem;
-  padding: 0 1.5rem;
+  padding: 0 2rem;
 }
 
 .watch-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  column-gap: 2rem;
+  grid-template-columns: repeat(4, 1fr);
+  column-gap: 1.75rem;
   row-gap: 2.5rem;
+}
+
+@media (max-width: 1150px) and (min-width: 769px) {
+  .watch-grid {
+    grid-template-columns: repeat(3, 1fr);
+    column-gap: 1.5rem;
+  }
 }
 
 /* Watch Card: OPEN MINIMAL ELEGANT LAYOUT */
